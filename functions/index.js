@@ -3,7 +3,7 @@ const admin = require('firebase-admin');
 admin.initializeApp(functions.config().firebase);
 
 exports.helloWorld = functions.https.onRequest((request, response) => {
-    response.send("Hello Kevin!");
+    response.send("Hello Kevin - this is a firestore cloud function test!");
 });
 
 const createNotification = (notification) => {
@@ -24,4 +24,20 @@ exports.projectCreated = functions.firestore
         }
 
         return createNotification(notification);
+    })
+
+exports.newUserJoins = functions.auth.user()
+    .onCreate(user => {
+        return admin.firestore().collection('users')
+            .doc(user.uid).get().then(doc => {
+
+                const newUser = doc.data();
+                const notification = {
+                    content: 'New user joined',
+                    user: `${newUser.firstName} ${newUser.lastName}`,
+                    time: admin.firestore.FieldValue.serverTimestamp()
+                }
+
+                return createNotification(notification);
+            })
     })
